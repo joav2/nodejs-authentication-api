@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response, Router } from "express";
 import StatusCodes from "http-status-codes";
+import { User } from "../models/user.model";
+import userService from "../services/user.service";
 
 //  get /users
 //  get /users/:uuid
@@ -7,27 +9,41 @@ import StatusCodes from "http-status-codes";
 //  put /users/:uuid
 //  delete /users/:uuid
 
-const usersRoute = Router();
+const route = Router();
 
-usersRoute.get("/users", (req: Request, res: Response, next: NextFunction) => {
+route.get("/users", (req: Request, res: Response, next: NextFunction) => {
   const users = [{ username: "joao" }];
   res.status(StatusCodes.OK).json(users);
 });
 
-usersRoute.get(
-  "/users/:uuid",
-  (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
-    const uuid = req.params.uuid;
-    res.status(StatusCodes.OK).send({ uuid });
+route.get(
+  "/:uuid",
+  async (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
+    try {
+      const uuid = req.params.uuid;
+      const user: User | null = await userService.findByUuid(uuid);
+      if (!user) {
+        return res.sendStatus(StatusCodes.NO_CONTENT);
+      }
+      return res.status(StatusCodes.OK).json(user);
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
-usersRoute.post("/users", (req: Request, res: Response, next: NextFunction) => {
-  const newUser = req.body;
-  res.status(StatusCodes.CREATED).send(newUser);
+route.post("/", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user: User = req.body;
+    const uuid = await userService.create(user);
+    return res.status(StatusCodes.CREATED).json({ uuid: uuid });
+  } catch (error) {
+    console.log(error);
+    return next(error);
+  }
 });
 
-usersRoute.put(
+route.put(
   "/users/:uuid",
   (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
     const uuid = req.params.uuid;
@@ -39,11 +55,11 @@ usersRoute.put(
   }
 );
 
-usersRoute.delete(
+route.delete(
   "/users/:uuid",
   (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
     res.sendStatus(StatusCodes.OK);
   }
 );
 
-export default usersRoute;
+export default route;

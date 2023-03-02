@@ -1,0 +1,8 @@
+{
+  "database": {
+    "uri": "postgres://postgres:postgrespw@localhost:32768/nodejs_authentication"
+  },
+  "authentication": {
+    "cryptKey": "my_salt"
+  }
+}
